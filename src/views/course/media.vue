@@ -1,0 +1,370 @@
+<template>
+    <div>
+        <div class="select-title-btn">
+            <el-button class="add-btn" type="primary" @click="openAdd"><svg-icon icon-class="edit" />新增图文</el-button>
+
+            <el-form :inline="true" class="right-btn">
+                <el-form-item>
+                    <!-- clearable 是否显示清除按钮 -->
+                    <el-select v-model="listQuery.status" placeholder="商品状态" clearable>
+                        <el-option v-for="(item,index) in statusOptions" :key="index" :label="item" :value="index" />
+                    </el-select>
+                </el-form-item>
+
+                <el-form-item>
+                    <el-input v-model="listQuery.title" placeholder="标题" @keyup.enter.native="handleSearch" />
+                </el-form-item>
+
+                <el-form-item>
+                    <el-button type="primary" @click="handleSearch">查询</el-button>
+                </el-form-item>
+            </el-form>
+        </div>
+        <!-- @sort-change 排序条件发生变化时触发 -->
+        <!-- sortable="custom" 是否可以排序 custom表示可以-->
+        <!-- class-name 列的类名 -->
+        <!-- @sort-change="sortChange" -->
+        <el-table :data="tableData" border class="el-table" >
+            <el-table-column label="ID" sortable="custom" :class-name="getSortClass('id')" width="80">
+                <template slot-scope="scope">
+                    {{ scope.row.id }}
+                </template>
+            </el-table-column>
+
+            <el-table-column label="图文内容">
+                <template slot-scope="scope" style="display: flex;">
+                    <template>
+                        <el-image style="width: 100px; height: 50px;margin-right:10px" :src="scope.row.cover" />
+                    </template>
+                    <template style="display: flex;flex-direction: column;justify-content: space-between;">
+                        <template>{{ scope.row.title }}</template>
+                        <template>${{ scope.row.price }}</template>
+                    </template>
+                </template>
+            </el-table-column>
+            <el-table-column label="订阅量" width="120">
+                <template slot-scope="scope">
+                {{ scope.row.sub_count }}
+                </template>
+            </el-table-column>
+            <el-table-column label="状态" width="120">
+                <template slot-scope="scope">
+                    <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'" size="small">
+                        {{ scope.row.status | statusFormat }}
+                    </el-tag>
+                </template>
+            </el-table-column>
+            <el-table-column label="创建时间" width="160">
+                <template slot-scope="scope">
+                    {{ scope.row.created_time }}
+                </template>
+            </el-table-column>
+            <el-table-column label="操作" width="280">
+                
+                <template slot-scope="{row,$index}">
+                    <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+                    <!-- <el-buttom :type="row.status ? '':'success'" @click="handleChangeStatus(row,0)">
+                        {{row.status? '下架':'上架'}}
+                    </el-buttom> -->
+                    <el-button v-if="row.status === 0" type="success" size="small" @click="handleChangeStatus(row,1)">上架</el-button>
+                    <el-button v-if="row.status === 1" size="small" @click="handleChangeStatus(row,0)">下架</el-button>
+                    <el-button type="danger" size="small" @click="deleteItem(row,$index)">删除</el-button>
+                </template> 
+               
+               
+            </el-table-column>
+        </el-table>
+
+        <el-pagination
+            style="margin-top:30px"
+            background
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="total"
+            :page.sync="listQuery.page"
+            :page-sizes="[5,10,15]"
+            :limit.sync="listQuery.limit"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+        >
+        </el-pagination>
+
+        <el-dialog :title="textMap[dialogStatus]" fullscreen :visible.sync="dialogFormVisible">
+            <el-form ref="dataForm" :model="rulesForm" :rules="rules" style="width: 600px; margin-left: 50px" >
+                <el-form-item>新增</el-form-item>
+                <el-form-item label="标题" prop="title">
+                    <el-input v-model="rulesForm.title" style="width: 500px; margin-left: 50px" />
+                </el-form-item>
+                <el-form-item label="封面">
+                    <el-upload
+                        style="margin-left: 100px"
+                        action="https://jsonplaceholder.typicode.com/posts/"
+                        list-type="picture-card"
+                        :on-preview="handlePictureCardPreview"
+                        :on-remove="handleUploadRemove"
+                        :on-success="handleUploadSuccess"
+                    >
+                        <i class="el-icon-plus" />
+                    </el-upload>
+                <el-dialog :visible.sync="dialogVisible">
+                    <img width="100%" :src="dialogImageUrl" alt="">
+                </el-dialog>
+                </el-form-item>
+                    <el-form-item label="试看内容" prop="try">
+                    <Tinymce v-model="rulesForm.try" style="width: 600px; height: 300px; margin-left: 100px" />
+                </el-form-item>
+                <el-form-item label="课程内容" prop="content" style="margin-top: 220px">
+                    <Tinymce v-model="rulesForm.content" style="width: 600px; height: 300px; margin-left: 100px" />
+                </el-form-item>
+                <el-form-item label="课程价格" style="margin: 220px 0 0 30px">
+                    <el-input-number v-model="rulesForm.price" :min="1" :max="10"  label="描述文字" />
+                </el-form-item>
+                <el-form-item label="状态" style="margin: 30px 0 0 30px" >
+                    <el-radio-group v-model="rulesForm.status">
+                        <el-radio :label="0">下架</el-radio>
+                        <el-radio :label="1">上架</el-radio>
+                    </el-radio-group>
+                    
+                </el-form-item>
+                <el-form-item style="margin:20px 0 0 150px">
+                    <el-button @click="quitAdd">取消</el-button>
+                    <el-button type="primary" @click="dialogStatus==='create'?createData():updateData()">提交</el-button>
+                </el-form-item>
+            </el-form>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+import { fetchList,createMedia,deleteMedia,updateMedia } from '../../api/media'
+import Tinymce from '../../components/Tinymce'
+// import Pagination from '@/components/Pagination' // secondary package based on el-pagination
+
+const statusOptions = {
+    0:"已下架",
+    1:'已上架'
+}
+
+export default {
+    components: {
+        Tinymce
+    },
+    filters: {
+        statusFormat(status) {
+            return statusOptions[status]
+        }
+    },
+    data() {
+        return {
+            tableData: [],
+            total:0,
+            list:null,
+            dialogFormVisible: false,       // 增加的对话框是否显示
+            dialogVisible:false,
+            dialogImageUrl:"",
+            statusOptions,
+            page:1,
+            sort:'+id',
+            num: 1, // 添加时的基础价格
+            rulesForm: {    // 得到的数据列表
+                id: '',
+                title: '',
+                status: 1,
+                price: 0,
+                try: '', // 试看内容
+                content: '',
+                cover: ''
+            },
+            listQuery: {
+                page: 1,
+                limit: 5,
+                status: undefined,
+                title: undefined,
+                sort: '+id'
+            },
+            dialogStatus:"",
+            textMap: {
+                update: '修改',
+                create: '新增'
+            },
+            rules: {
+                title: [
+                    {
+                        required: true,
+                        message: '标题不能为空',
+                        trigger: 'blur'
+                    }
+                ],
+                try: [
+                    {
+                        required: true,
+                        message: '试看内容不能为空',
+                        trigger: 'blur'
+                    }
+                ],
+                content: [
+                    {
+                        required: true,
+                        message: '课程内容不能为空',
+                        trigger: 'blur'
+                    }
+                ]
+            },
+        }
+        
+    },
+    created() {
+        this.getList()    
+    },
+    methods: {
+        // 获取列表
+        async getList(){
+            await fetchList(this.listQuery).then((res) => {
+                console.log(res)
+                if (res.code === 20000) {
+                    this.tableData = res.data.items,
+                    this.total = res.data.total
+                }
+            })
+            .catch((err) => {
+                console.log('错误')
+            })
+        },
+        // 图片
+        handlePictureCardPreview() {},
+        handleUploadRemove() {},
+        handleUploadSuccess() {},
+
+        // 当添加时 价钱 input-number改变时
+        // handleChange(value) {
+        //     // console.log(value)
+        // },
+        
+        // 取消添加
+        quitAdd(){
+            this.dialogFormVisible = false
+        },
+        // 清空表单
+        resetForm(){
+            this.rulesForm = {
+                id: '',
+                title: '',
+                status: 1,
+                price: 0,
+                try: '', // 试看内容
+                content: '',
+                cover: ''
+            }
+        },
+        // 点击添加
+        openAdd() {
+            this.resetForm()
+            this.dialogStatus = 'create'
+            this.dialogFormVisible = true
+            
+        },
+        // 提交添加
+        createData(){
+            
+            this.getList()
+        },
+        // 点击编辑
+        handleEdit(row){
+
+            this.dialogFormVisible = true
+
+            this.dialogStatus = 'update'
+            
+        },
+        // 提交编辑
+        updateData(){   
+            
+            this.getList()
+        },
+        // 删除一行
+        deleteItem(row,index){
+            deleteMedia(row).then((res)=>{
+                // console.log(res);
+                if(res.code === 20000){
+                    this.$notify({
+                        title:'提示',
+                        message:"删除成功",
+                        type:'success',
+                        duration:2000
+                    })
+                    this.tableData.splice(index,1)
+                }
+            })
+        },
+        // 改变状态
+        handleChangeStatus(row,status){
+            this.$message({
+                message:"修改成功",
+                type:'success'
+            })
+            row.status = status
+        },
+        
+        // 表单发生改变
+        // sortChange(data){
+        //     const { prop,order } = data
+        //     console.log(data);
+        //     if(prop === 'id'){
+        //         this.sortById(order)
+        //     }
+        // },
+        // 列明
+        getSortClass(key){
+            const sort = this.listQuery.sort
+            return sort === `+${key}` ? `ascending` : `descending`
+        },
+        // 通过id分类
+        sortById(order){
+            if(order === 'ascending'){
+                this.listQuery.sort = "+id"
+            }
+            if(order === 'descending'){
+                this.listQuery.sort = "-id"
+            }
+            this.handleSearch()
+        },
+        // 查询
+        handleSearch(){
+            this.listQuery.page = 1
+            this.getList()
+        },
+        // 分页
+        // 改变每页显示的条数
+        handleSizeChange(val) {
+            this.listQuery.page = 1
+            this.listQuery.limit = val
+            // 重新加载数据
+            this.getList()
+        },
+        handleCurrentChange(val) {
+            this.listQuery.page = val
+            // 重新加载数据
+            this.getList()
+        }
+    }
+}
+</script>
+
+<style scoped>
+.add-btn {
+  margin-left: 40px;
+}
+.select-title-btn {
+  display: flex;
+  justify-content: space-between;
+  width: 98%;
+  height: 40px;
+  margin: 20px 20px 0 0;
+}
+
+.el-table {
+  width: 96%;
+  text-align: center;
+  margin: 20px auto;
+}
+
+</style>>
