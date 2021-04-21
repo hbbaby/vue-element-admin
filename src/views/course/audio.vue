@@ -6,7 +6,7 @@
             <el-form :inline="true" class="right-btn">
                 <el-form-item>
                     <!-- clearable 是否显示清除按钮 -->
-                    <el-select v-model="listQuery.status" placeholder="音频状态" clearable>
+                    <el-select v-model="listQuery.status" placeholder="商品状态" clearable>
                         <el-option v-for="(item,index) in statusOptions" :key="index" :label="item" :value="index" />
                     </el-select>
                 </el-form-item>
@@ -24,23 +24,30 @@
         <!-- sortable="custom" 是否可以排序 custom表示可以-->
         <!-- class-name 列的类名 -->
         <!-- @sort-change="sortChange" -->
-        <el-table :data="tableData" border class="el-table" >
+        <el-table :data="tableData" border class="el-table" @sort-change="sortChange">
             <el-table-column label="ID" sortable="custom" :class-name="getSortClass('id')" width="80">
                 <template slot-scope="scope">
                     {{ scope.row.id }}
                 </template>
             </el-table-column>
 
-            <el-table-column label="图文内容">
-                <template slot-scope="scope" style="display: flex;">
-                    <template>
+            <el-table-column label="音频内容">
+                <div slot-scope="scope" style="display: flex;flex-wrap:nowrap">
+                    <div>
                         <el-image style="width: 100px; height: 50px;margin-right:10px" :src="scope.row.cover" />
-                    </template>
-                    <template style="display: flex;flex-direction: column;justify-content: space-between;">
-                        <template>{{ scope.row.title }}</template>
-                        <template>${{ scope.row.price }}</template>
-                    </template>
-                </template>
+                    </div>
+                    <div >
+                        <div style="displsy:flex;flex-wrap:wrap">
+                            <div>
+                                {{ scope.row.title }}
+                            </div>
+                            <div style="color:red;margin-top:10px">
+                                ${{ scope.row.price }}
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
             </el-table-column>
             <el-table-column label="订阅量" width="120">
                 <template slot-scope="scope">
@@ -54,7 +61,7 @@
                     </el-tag>
                 </template>
             </el-table-column>
-            <el-table-column label="创建时间" width="170">
+            <el-table-column label="创建时间" width="160">
                 <template slot-scope="scope">
                     {{ scope.row.created_time }}
                 </template>
@@ -63,6 +70,9 @@
                 
                 <template slot-scope="{row,$index}">
                     <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+                    <!-- <el-buttom :type="row.status ? '':'success'" @click="handleChangeStatus(row,0)">
+                        {{row.status? '下架':'上架'}}
+                    </el-buttom> -->
                     <el-button v-if="row.status === 0" type="success" size="small" @click="handleChangeStatus(row,1)">上架</el-button>
                     <el-button v-if="row.status === 1" size="small" @click="handleChangeStatus(row,0)">下架</el-button>
                     <el-button type="danger" size="small" @click="deleteItem(row,$index)">删除</el-button>
@@ -132,9 +142,8 @@
 </template>
 
 <script>
-import { fetchList,createAudio,updateAudio,deleteAudio } from '../../api/media'
+import { fetchList,createAudio,updateAudio,deleteAudio } from '../../api/audio'
 import Tinymce from '../../components/Tinymce'
-// import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 
 const statusOptions = {
     0:"已下架",
@@ -211,6 +220,7 @@ export default {
     },
     created() {
         this.getList()    
+        // 不影响表单的校验结果
     },
     methods: {
         // 获取列表
@@ -230,6 +240,8 @@ export default {
         handlePictureCardPreview() {},
         handleUploadRemove() {},
         handleUploadSuccess() {},
+
+        
         
         // 取消添加
         quitAdd(){
@@ -252,39 +264,72 @@ export default {
             this.resetForm()
             this.dialogStatus = 'create'
             this.dialogFormVisible = true
-            
+            this.$nextTick(() => {
+                this.$refs['dataForm'].clearValidate()
+            })
         },
         // 提交添加
-        createData(){
-            
-            this.getList()
+        createData() {
+            this.$refs['dataForm'].validate((valid) => {
+                if (valid) {
+                    this.rulesForm.id = parseInt(Math.random() * 100) + 1024 // mock a id
+                    this.rulesForm.author = 'vue-element-admin'
+                    createAudio(this.rulesForm).then(() => {
+                        this.tableData.unshift(this.rulesForm)
+                        this.dialogFormVisible = false
+                        this.$notify({
+                            title: 'Success',
+                            message: 'Created Successfully',
+                            type: 'success',
+                            duration: 2000
+                        })
+                    })
+                }
+            })
         },
         // 点击编辑
-        handleEdit(row){
-
-            this.dialogFormVisible = true
-
-            this.dialogStatus = 'update'
-            
-        },
+        handleEdit(row) {
+                this.rulesForm = Object.assign({}, row) // copy obj
+                // this.rulesForm.timestamp = new Date(this.rulesForm.timestamp)
+                this.dialogStatus = 'update'
+                this.dialogFormVisible = true
+                this.$nextTick(() => {
+                    this.$refs['dataForm'].clearValidate()
+                })
+            },
         // 提交编辑
-        updateData(){   
-            
-            this.getList()
+        updateData() {
+            this.$refs['dataForm'].validate((valid) => {
+                if (valid) {
+                    const tempData = Object.assign({}, this.rulesForm)
+                    // tempData.timestamp = +new Date(tempData.timestamp) // change Thu Nov 30 2017 16:41:05 GMT+0800 (CST) to 1512031311464
+                    updateAudio(tempData).then(() => {
+                        const index = this.tableData.findIndex(v => v.id === this.rulesForm.id)
+                        this.tableData.splice(index, 1, this.rulesForm)
+                        this.dialogFormVisible = false
+                        this.$notify({
+                            title: 'Success',
+                            message: 'Update Successfully',
+                            type: 'success',
+                            duration: 2000
+                        })
+                    })
+                }
+            })
         },
         // 删除一行
         deleteItem(row,index){
             deleteAudio(row).then((res)=>{
-                console.log(res);
-                // if(res.code === 20000){
-                //     this.$notify({
-                //         title:'提示',
-                //         message:"删除成功",
-                //         type:'success',
-                //         duration:2000
-                //     })
-                //     this.tableData.splice(index,1)
-                // }
+                // console.log(res);
+                if(res.code === 20000){
+                    this.$notify({
+                        title:'提示',
+                        message:"删除成功",
+                        type:'success',
+                        duration:2000
+                    })
+                    this.tableData.splice(index,1)
+                }
             })
         },
         // 改变状态
@@ -297,13 +342,13 @@ export default {
         },
         
         // 表单发生改变
-        // sortChange(data){
-        //     const { prop,order } = data
-        //     console.log(data);
-        //     if(prop === 'id'){
-        //         this.sortById(order)
-        //     }
-        // },
+        sortChange(data){
+            const { prop,order } = data
+            console.log(data);
+            if(prop === 'id'){
+                this.sortById(order)
+            }
+        },
         // 列明
         getSortClass(key){
             const sort = this.listQuery.sort

@@ -24,48 +24,53 @@
         <!-- sortable="custom" 是否可以排序 custom表示可以-->
         <!-- class-name 列的类名 -->
         <!-- @sort-change="sortChange" -->
-        <el-table :data="tableData" border class="el-table" >
-            <el-table-column label="ID" sortable="custom" :class-name="getSortClass('id')" width="80">
+        <el-table :data="tableData" border class="el-table" @sort-change="sortChange">
+            <el-table-column algin="center" label="ID" sortable="custom" :class-name="getSortClass('id')" width="80">
                 <template slot-scope="scope">
                     {{ scope.row.id }}
                 </template>
             </el-table-column>
 
             <el-table-column label="图文内容">
-                <template slot-scope="scope" style="display: flex;">
-                    <template>
+                <div slot-scope="scope" style="display: flex;flex-wrap:nowrap">
+                    <div>
                         <el-image style="width: 100px; height: 50px;margin-right:10px" :src="scope.row.cover" />
-                    </template>
-                    <template style="display: flex;flex-direction: column;justify-content: space-between;">
-                        <template>{{ scope.row.title }}</template>
-                        <template>${{ scope.row.price }}</template>
-                    </template>
-                </template>
+                    </div>
+                    <div >
+                        <div style="displsy:flex;flex-wrap:wrap">
+                            <div>
+                                {{ scope.row.title }}
+                            </div>
+                            <div style="color:red;margin-top:10px">
+                                ${{ scope.row.price }}
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
             </el-table-column>
-            <el-table-column label="订阅量" width="120">
+            
+            <el-table-column algin="center" label="订阅量" width="120">
                 <template slot-scope="scope">
-                {{ scope.row.sub_count }}
+                    {{ scope.row.sub_count }}
                 </template>
             </el-table-column>
-            <el-table-column label="状态" width="120">
+            <el-table-column algin="center" label="状态" width="120">
                 <template slot-scope="scope">
                     <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'" size="small">
                         {{ scope.row.status | statusFormat }}
                     </el-tag>
                 </template>
             </el-table-column>
-            <el-table-column label="创建时间" width="160">
+            <el-table-column  algin="center" label="创建时间" width="160">
                 <template slot-scope="scope">
                     {{ scope.row.created_time }}
                 </template>
             </el-table-column>
-            <el-table-column label="操作" width="280">
+            <el-table-column algin="center" label="操作" width="280">
                 
                 <template slot-scope="{row,$index}">
                     <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
-                    <!-- <el-buttom :type="row.status ? '':'success'" @click="handleChangeStatus(row,0)">
-                        {{row.status? '下架':'上架'}}
-                    </el-buttom> -->
                     <el-button v-if="row.status === 0" type="success" size="small" @click="handleChangeStatus(row,1)">上架</el-button>
                     <el-button v-if="row.status === 1" size="small" @click="handleChangeStatus(row,0)">下架</el-button>
                     <el-button type="danger" size="small" @click="deleteItem(row,$index)">删除</el-button>
@@ -155,7 +160,7 @@ export default {
     },
     data() {
         return {
-            tableData: [],
+            tableData: [],      // 表格内容
             total:0,
             list:null,
             dialogFormVisible: false,       // 增加的对话框是否显示
@@ -165,7 +170,7 @@ export default {
             page:1,
             sort:'+id',
             num: 1, // 添加时的基础价格
-            rulesForm: {    // 得到的数据列表
+            rulesForm: {    // 填写数据列表
                 id: '',
                 title: '',
                 status: 1,
@@ -219,7 +224,7 @@ export default {
         // 获取列表
         async getList(){
             await fetchList(this.listQuery).then((res) => {
-                console.log(res)
+                // console.log(res)
                 if (res.code === 20000) {
                     this.tableData = res.data.items,
                     this.total = res.data.total
@@ -233,11 +238,6 @@ export default {
         handlePictureCardPreview() {},
         handleUploadRemove() {},
         handleUploadSuccess() {},
-
-        // 当添加时 价钱 input-number改变时
-        // handleChange(value) {
-        //     // console.log(value)
-        // },
         
         // 取消添加
         quitAdd(){
@@ -260,25 +260,58 @@ export default {
             this.resetForm()
             this.dialogStatus = 'create'
             this.dialogFormVisible = true
-            
+            this.$nextTick(() => {
+                this.$refs['dataForm'].clearValidate()
+            })
         },
         // 提交添加
-        createData(){
-            
-            this.getList()
+        createData() {
+            this.$refs['dataForm'].validate((valid) => {
+                if (valid) {
+                    this.rulesForm.id = parseInt(Math.random() * 100) + 1024 // mock a id
+                    this.rulesForm.author = 'vue-element-admin'
+                    createMedia(this.rulesForm).then(() => {
+                        this.tableData.unshift(this.rulesForm)
+                        this.dialogFormVisible = false
+                        this.$notify({
+                            title: 'Success',
+                            message: 'Created Successfully',
+                            type: 'success',
+                            duration: 2000
+                        })
+                    })
+                }
+            })
         },
         // 点击编辑
-        handleEdit(row){
-
-            this.dialogFormVisible = true
-
-            this.dialogStatus = 'update'
-            
-        },
+        handleEdit(row) {
+                this.rulesForm = Object.assign({}, row) // copy obj
+                // this.rulesForm.timestamp = new Date(this.rulesForm.timestamp)
+                this.dialogStatus = 'update'
+                this.dialogFormVisible = true
+                this.$nextTick(() => {
+                    this.$refs['dataForm'].clearValidate()
+                })
+            },
         // 提交编辑
-        updateData(){   
-            
-            this.getList()
+        updateData() {
+            this.$refs['dataForm'].validate((valid) => {
+                if (valid) {
+                    const tempData = Object.assign({}, this.rulesForm)
+                    // tempData.timestamp = +new Date(tempData.timestamp) // change Thu Nov 30 2017 16:41:05 GMT+0800 (CST) to 1512031311464
+                    updateMedia(tempData).then(() => {
+                        const index = this.tableData.findIndex(v => v.id === this.rulesForm.id)
+                        this.tableData.splice(index, 1, this.rulesForm)
+                        this.dialogFormVisible = false
+                        this.$notify({
+                            title: 'Success',
+                            message: 'Update Successfully',
+                            type: 'success',
+                            duration: 2000
+                        })
+                    })
+                }
+            })
         },
         // 删除一行
         deleteItem(row,index){
@@ -305,13 +338,13 @@ export default {
         },
         
         // 表单发生改变
-        // sortChange(data){
-        //     const { prop,order } = data
-        //     console.log(data);
-        //     if(prop === 'id'){
-        //         this.sortById(order)
-        //     }
-        // },
+        sortChange(data){
+            const { prop,order } = data
+            console.log(data);
+            if(prop === 'id'){
+                this.sortById(order)
+            }
+        },
         // 列明
         getSortClass(key){
             const sort = this.listQuery.sort

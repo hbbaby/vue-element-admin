@@ -153,6 +153,14 @@ export const asyncRoutes = [
           title: '专栏',
           roles: ['admin'] // or you can only set roles in sub nav
         }
+      },{
+        path: 'column-detail/:id',
+        component: () => import('@/views/course/column_detail'),
+        name: 'ColumnDetail',
+        meta: {
+          title: '专栏详情',
+          roles: ['admin'] // or you can only set roles in sub nav
+        }
       }
     ]
   },
