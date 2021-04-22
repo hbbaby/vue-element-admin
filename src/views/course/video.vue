@@ -342,13 +342,13 @@ export default {
         },
         
         // 表单发生改变
-        // sortChange(data){
-        //     const { prop,order } = data
-        //     console.log(data);
-        //     if(prop === 'id'){
-        //         this.sortById(order)
-        //     }
-        // },
+        sortChange(data){
+            const { prop,order } = data
+            console.log(data);
+            if(prop === 'id'){
+                this.sortById(order)
+            }
+        },
         // 列明
         getSortClass(key){
             const sort = this.listQuery.sort
