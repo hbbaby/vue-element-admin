@@ -107,17 +107,18 @@
         <el-dialog
             title="选择课程"
             :visible.sync="dialogVisible"
-            width="80%"
+            width="70%"
             top="5vh"
+            ref="chooseCourse"
             :before-close="handleClose">
                 <el-container style="height: 71vh; margin-top: -30px; margin-bottom: -30px">
                     <el-header>
-                        <el-form :inline="true" style="margin-left:620px">
+                        <el-form :inline="true" style="margin-left:720px">
                             <el-form-item>
-                                <el-input v-model="listQuery.title" placeholder="标题"></el-input>
+                                <el-input v-model="form.title" placeholder="标题"></el-input>
                             </el-form-item>
                             <el-form-item>
-                                <el-button type="primary" size="small" @click="handleSearch">搜索</el-button>
+                                <el-button type="primary" size="small" @click="handleInnerSearch">搜索</el-button>
                             </el-form-item>
                         </el-form>
                     </el-header>
@@ -138,6 +139,7 @@
                                     highlight-current-row 
                                     style="width:100%"
                                     ref="multipleTable"
+                                   
                                     @selection-change="handleSelectionChange"
                                 >
                                     <!-- 全选 -->
@@ -163,6 +165,7 @@
                                     :total="total"
                                     :page.sync="listQuery.page"
                                     :page-sizes="[5,10,15]"
+                                    @pagination="getData"
                                     :limit.sync="listQuery.limit"
                                     @size-change="handleSizeChange"
                                     @current-change="handleCurrentChange"
@@ -185,7 +188,6 @@
 
 <script>
 import { fetchDetail,fetchDetailCourse } from "../../api/column"
-import { ChooseCourse } from "./components/ChooseCourse"
 
 let M = {}      // 用来放三个相同的接口
 // 封装导入接口的函数
@@ -203,9 +205,7 @@ const statusOptions = {
 }
 
 export default {
-    components:{
-        ChooseCourse
-    },
+    
     filters: {
         statusFormat(status) {
             return statusOptions[status]
@@ -229,7 +229,10 @@ export default {
             },
             listQuery: {
                 status: undefined,
-                title: undefined,
+                title:"",
+                page:1,
+                limit:10,
+                sort:"+id"
             },
             statusOptions,
             form: {
@@ -260,6 +263,7 @@ export default {
             dialogVisible:false,
             callback: null,
             limit: -1,
+            multipleSelection:[],   // 选中的条数
         }
         
     },
@@ -274,15 +278,16 @@ export default {
     methods: {
         async getNextList(){
             await fetchDetailCourse(this.listQuery).then((res)=>{
-                console.log(res);
+                // console.log(res);
                 this.tableData = res.data.items
                 this.total = res.data.total
             })
+            // 
         },
         // 拖拽函数
-        sortChange(){
+        // sortSet(){
 
-        },
+        // },
         // 获取列表
         async getList(){
             let id = this.$route.params.id
@@ -302,22 +307,36 @@ export default {
        
         // 点击添加
         openAdd() {
-            // this.$refs.chooseCourse.open((val)=>{
-            //     console.log('...');
-            //     this.tableData = [...this.tableData,...val]
-            // },50)
+            this.$refs.chooseCourse.open((val)=>{
+                console.log('...');
+                this.tableData = [...this.tableData,...val]
+            },50)
             this.dialogVisible = true
+        },
+        open(callback,limit = -1){
+            this.dialogVisible = true
+            this.limit = limit
+            this.callback = callback
+            this.dialogVisible = true
+            this.getData()
+        },
+        // 新增专栏时 点击确定
+        confirm(){
+            if(this.multipleSelection.length === 0){
+                return this.$message.error("至少选中一个")
+            }
+            if(this.limit != -1 && this.multipleSelection.length > this.limit ){
+                return this.$message.error("最多可以选中"+this.limit+"个")
+            }
+            this.callback(this.multipleSelection)
+            this.close()
+            // 清空选中
+            this.$refs.multipleSelection.clearSelection()
         },
         
         // 点击编辑
         handleEdit(row) {
-            this.rulesForm = Object.assign({}, row) // copy obj
-            // this.rulesForm.timestamp = new Date(this.rulesForm.timestamp)
-            this.dialogStatus = 'update'
-            // this.dialogFormVisible = true
-            this.$nextTick(() => {
-                this.$refs['dataForm'].clearValidate()
-            })
+            
         },
         
         // 删除一行
@@ -333,8 +352,8 @@ export default {
         
         // 表单发生改变
         sortChange(data){
+            // console.log(data);   // 没有执行
             const { prop,order } = data
-            console.log(data);
             if(prop === 'id'){
                 this.sortById(order)
             }
@@ -353,11 +372,17 @@ export default {
                 this.listQuery.sort = "-id"
             }
             this.handleSearch()
+            this.handleInnerSearch()
         },
         // 查询
         handleSearch(){
-            this.page = 1
-            this.getList()
+            this.listQuery.page = 1
+            this.getNextList()
+        },
+        // 里面的查询
+        handleInnerSearch(){
+            this.form.page = 1
+            this.getData()
         },
         
         // 处理上架下架
@@ -384,8 +409,8 @@ export default {
             })
         },
         // 主题内容改变
-        handleSelectionChange(){
-
+        handleSelectionChange(val){
+            this.multipleSelection = val
         },
         // 分页
         // 改变每页显示的条数
@@ -393,12 +418,12 @@ export default {
             this.form.page = 1
             this.form.limit = val
             // 重新加载数据
-            // this.getData()
+            this.getData()
         },
         handleCurrentChange(val) {
             this.form.page = val
             // 重新加载数据
-            // this.getData()
+            this.getData()
         },
         // 弹窗侧边选择
         onAsideSelect(e){

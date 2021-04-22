@@ -103,7 +103,6 @@ export const constantRoutes = [
  * the routes that need to be dynamically loaded based on user roles
  */
 export const asyncRoutes = [
-
   {
     path: '/course',
     component: Layout,
@@ -155,6 +154,7 @@ export const asyncRoutes = [
         }
       },{
         path: 'column-detail/:id',
+        hidden:true,
         component: () => import('@/views/course/column_detail'),
         name: 'ColumnDetail',
         meta: {

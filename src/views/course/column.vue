@@ -349,7 +349,7 @@ export default {
         // 表单发生改变调此函数 然后调用id分类
         sortChange(data){
             const { prop,order } = data
-            console.log(data);
+            // console.log(data);
             if(prop === 'id'){
                 this.sortById(order)
             }
