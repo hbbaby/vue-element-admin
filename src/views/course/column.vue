@@ -25,13 +25,13 @@
         <!-- class-name 列的类名 -->
         <!-- @sort-change="sortChange" -->
         <el-table :data="tableData" border class="el-table" @sort-change="sortChange">
-            <el-table-column algin="center" label="ID" sortable="custom" :class-name="getSortClass('id')" width="80">
+            <el-table-column align="center" label="ID" sortable="custom" :class-name="getSortClass('id')" width="80">
                 <template slot-scope="scope">
                     {{ scope.row.id }}
                 </template>
             </el-table-column>
 
-            <el-table-column algin="center" label="专栏内容">
+            <el-table-column align="center" label="专栏内容">
                 <div slot-scope="scope" style="display: flex;flex-wrap:nowrap">
                     <div>
                         <el-image style="width: 100px; height: 50px;margin-right:10px" :src="scope.row.cover" />
@@ -49,31 +49,31 @@
                     </div>
                 </div>
             </el-table-column>
-            <el-table-column algin="center" label="更新状态" width="100">
+            <el-table-column align="center" label="更新状态" width="100">
                 <template slot-scope="scope"  >
                     <!-- {{ scope.row.isend }} -->
                     <p style="color:red" v-if="scope.row.isend === 0">连载中</p>
                     <p  v-if="scope.row.isend === 1">已完结</p>
                 </template>
             </el-table-column>
-            <el-table-column algin="center" label="订阅量" width="100">
+            <el-table-column align="center" label="订阅量" width="100">
                 <template slot-scope="scope">
                     {{ scope.row.sub_count }}
                 </template>
             </el-table-column>
-            <el-table-column algin="center" label="状态" width="120">
+            <el-table-column align="center" label="状态" width="120">
                 <template slot-scope="scope">
                     <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'" size="small">
                         {{ scope.row.status | statusFormat }}
                     </el-tag>
                 </template>
             </el-table-column>
-            <el-table-column algin="center" label="创建时间" width="160">
+            <el-table-column align="center" label="创建时间" width="160">
                 <template slot-scope="scope">
                     {{ scope.row.created_time }}
                 </template>
             </el-table-column>
-            <el-table-column algin="center" label="操作" width="280">
+            <el-table-column align="center" label="操作" width="280">
                 
                 <template slot-scope="{row,$index}">
                     <el-button type="warning" size="small" @click="goDetail(row)">目录</el-button>

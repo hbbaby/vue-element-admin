@@ -23,7 +23,7 @@
         <el-table :data="tableData" ref="multipleTable" border class="el-table" @selection-change="sortChange">
             <el-table-column type="selection" width="55"> </el-table-column>
 
-            <el-table-column algin="center" label="订单号" width="80">
+            <el-table-column align="center" label="订单号" width="80">
                 <template slot-scope="scope">
                     {{ scope.row.no }}
                 </template>
@@ -37,13 +37,13 @@
                 </div>
             </el-table-column>
             
-            <el-table-column algin="center" label="订单类型" width="80">
+            <el-table-column align="center" label="订单类型" width="80">
                 <template slot-scope="scope">
                     {{ scope.row.type | typeFilters}}
                 </template>
             </el-table-column>
 
-            <el-table-column algin="center" label="订单状态" width="100">
+            <el-table-column align="center" label="订单状态" width="100">
                 <template slot-scope="scope">
                     <el-tag :type="scope.row.status == 'success' ? 'success' : 'danger'" size="small">
                         {{ scope.row.status | statusFilters }}
@@ -52,29 +52,29 @@
             </el-table-column>
 
 
-            <el-table-column algin="center" label="原价/实付(元)" width="120">
+            <el-table-column align="center" label="原价/实付(元)" width="120">
                 <template slot-scope="scope">
                     <span>{{ scope.row.total_price }}/</span>
                     <span style="color:red">{{scope.row.price}}</span>
                 </template>
             </el-table-column>
             
-            <el-table-column algin="center" label="支付方式" width="80">
+            <el-table-column align="center" label="支付方式" width="80">
                 <template slot-scope="scope">
                     {{ scope.row.pay_method | methodFilters }}
                 </template>
             </el-table-column>
             
-            <el-table-column  algin="center" label="创建/支付时间" width="160">
+            <el-table-column  align="center" label="创建/支付时间" width="160">
                 <template slot-scope="scope">
                     <p>{{ scope.row.created_time }}</p>
                     <p>{{ scope.row.updated_time }}</p>
                 </template>
             </el-table-column>
 
-            <el-table-column algin="center" label="操作" width="100">
+            <el-table-column align="center" label="操作" width="100">
                 <template slot-scope="{row,$index}">
-                    <el-button type="danger" :plain="true" size="small" @click="deleteRow(row,$index)" >删除</el-button>
+                    <el-button type="danger" size="small" @click="deleteRow(row,$index)" >删除</el-button>
                 </template> 
             </el-table-column>
         </el-table>
@@ -246,19 +246,6 @@ export default {
             this.listQuery.page = 1
             this.getList()
         },
-        // 分页
-        // 改变每页显示的条数
-        handleSizeChange(val) {
-            this.listQuery.page = 1
-            this.listQuery.limit = val
-            // 重新加载数据
-            this.getList()
-        },
-        handleCurrentChange(val) {
-            this.listQuery.page = val
-            // 重新加载数据
-            this.getList()
-        }
     }
 }
 </script>

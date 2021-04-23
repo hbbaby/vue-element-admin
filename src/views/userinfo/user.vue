@@ -38,18 +38,18 @@
                 </div>
             </el-table-column>
             
-            <el-table-column algin="center" label="消费总额" width="80">
+            <el-table-column align="center" label="消费总额" width="80">
                 <template slot-scope="scope">
                     {{ scope.row.total_consume }}
                 </template>
             </el-table-column>
             
-            <el-table-column  algin="center" label="创建时间" width="160">
+            <el-table-column  align="center" label="创建时间" width="160">
                 <template slot-scope="scope">
                     {{ scope.row.created_time }}
                 </template>
             </el-table-column>
-            <el-table-column algin="center" label="操作" width="300">
+            <el-table-column align="center" label="操作" width="300">
                 
                 <template slot-scope="{row}">
                     <el-button type="primary" size="small" @click="openinfo(row.user.id)" >详情</el-button>

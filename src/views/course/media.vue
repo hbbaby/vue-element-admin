@@ -25,7 +25,7 @@
         <!-- class-name 列的类名 -->
         <!-- @sort-change="sortChange" -->
         <el-table :data="tableData" border class="el-table" @sort-change="sortChange">
-            <el-table-column algin="center" label="ID" sortable="custom" :class-name="getSortClass('id')" width="80">
+            <el-table-column align="center" label="ID" sortable="custom" :class-name="getSortClass('id')" width="80">
                 <template slot-scope="scope">
                     {{ scope.row.id }}
                 </template>
@@ -50,24 +50,24 @@
                 </div>
             </el-table-column>
             
-            <el-table-column algin="center" label="订阅量" width="120">
+            <el-table-column align="center" label="订阅量" width="120">
                 <template slot-scope="scope">
                     {{ scope.row.sub_count }}
                 </template>
             </el-table-column>
-            <el-table-column algin="center" label="状态" width="120">
+            <el-table-column align="center" label="状态" width="120">
                 <template slot-scope="scope">
                     <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'" size="small">
                         {{ scope.row.status | statusFormat }}
                     </el-tag>
                 </template>
             </el-table-column>
-            <el-table-column  algin="center" label="创建时间" width="160">
+            <el-table-column  align="center" label="创建时间" width="160">
                 <template slot-scope="scope">
                     {{ scope.row.created_time }}
                 </template>
             </el-table-column>
-            <el-table-column algin="center" label="操作" width="280">
+            <el-table-column align="center" label="操作" width="280">
                 
                 <template slot-scope="{row,$index}">
                     <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
@@ -285,14 +285,14 @@ export default {
         },
         // 点击编辑
         handleEdit(row) {
-                this.rulesForm = Object.assign({}, row) // copy obj
-                // this.rulesForm.timestamp = new Date(this.rulesForm.timestamp)
-                this.dialogStatus = 'update'
-                this.dialogFormVisible = true
-                this.$nextTick(() => {
-                    this.$refs['dataForm'].clearValidate()
-                })
-            },
+            this.rulesForm = Object.assign({}, row) 
+            // this.rulesForm.timestamp = new Date(this.rulesForm.timestamp)
+            this.dialogStatus = 'update'
+            this.dialogFormVisible = true
+            this.$nextTick(() => {
+                this.$refs['dataForm'].clearValidate()
+            })
+        },
         // 提交编辑
         updateData() {
             this.$refs['dataForm'].validate((valid) => {
